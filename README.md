@@ -37,8 +37,8 @@ This project re-implements that feature in Python, making it accessible for Goog
 **3. Download or clone this repository:**
 ```
 #Clone the repository
-git clone https://github.com/YOUR_USERNAME/GWASKit-POS-to-RSID-Converter-Python-Version.git
-cd GWASKit-POS-to-RSID-Converter-Python-Version
+git clone https://github.com/https://github.com/Ali-mhm/GWASKit-posrs.py
+cd GWASKit-posrs.py
 ```
 
 **4. Example usage:**
