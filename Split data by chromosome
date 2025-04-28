@@ -1,0 +1,41 @@
+***
+def split_and_process(data_file, function_to_run):
+    """Splits the dataset by chromosome and applies a function to each subset.
+
+    This function reads the input data file, splits it into subsets based
+    on unique chromosome numbers, saves each subset to a temporary file,
+    applies the provided function to each subset, and optionally removes
+    the temporary files.
+
+    Args:
+        data_file (str): Path to the input CSV file.
+        function_to_run (callable): Function to be applied to each subset.
+    """
+    data = pd.read_csv(data_file)
+    chromosomes = data['chromosome'].unique()
+
+    # Split data by chromosome and save to temporary files
+    for chromosome in chromosomes:
+        subset = data[data['chromosome'] == chromosome]
+        if not subset.empty:
+            subset.to_csv(f'chromosome_{chromosome}.csv', index=False)
+
+    # Process each chromosome file using the provided function
+    for filename in glob.glob('chromosome_*.csv'):
+        df = pd.read_csv(filename)
+        function_to_run(df)
+
+    # Optionally, remove temporary chromosome files
+    for filename in glob.glob('chromosome_*.csv'):
+        os.remove(filename)
+
+def run_gwasikit(df):
+    """Runs GWASkit pos2rs to convert chromosome positions to rs IDs.
+
+    This function takes a Pandas DataFrame containing chromosome data,
+    extracts the chromosome number, saves the data to a temporary file,
+    runs GWASkit pos2rs command, and removes the temporary file.
+
+    Args:
+        df (pd.DataFrame): Input DataFrame with chromosome data.
+***
