@@ -1,0 +1,56 @@
+import pandas as pd
+import glob
+import os
+import subprocess
+
+def pos2rs_pipeline(input_file, gwaskit_path, rsdb_path, column_mapping, output_filename='combined_data.csv'):
+    """
+    Full pipeline: 
+    - Splits dataset by chromosome
+    - Converts POS to RSID using GWASkit
+    - Combines all outputs into a single CSV file.
+
+    Args:
+        input_file (str): Path to the input CSV file.
+        gwaskit_path (str): Path to GWASkit executable.
+        rsdb_path (str): Path to rsdb database.
+        column_mapping (dict): Mapping of required column names.
+        output_filename (str, optional): Name for the combined output CSV file. Default is 'combined_data.csv'.
+    """
+
+    data = pd.read_csv(input_file)
+    chromosomes = data[column_mapping['chromosome']].unique()
+
+    for chromosome in chromosomes:
+        subset = data[data[column_mapping['chromosome']] == chromosome]
+        if not subset.empty:
+            # Save subset to a temporary file
+            input_temp = f'chromosome_{chromosome}.csv'
+            output_temp = f'converted_data_{chromosome}.tsv'
+            subset.to_csv(input_temp, index=False)
+
+            # Run GWASkit command
+            command = [
+                gwaskit_path, "pos2rs",
+                "--inputFile", input_temp,
+                "--rsdb", rsdb_path,
+                "--out", output_temp,
+                "--SEP", "3",
+                "--CHR", column_mapping['chromosome'],
+                "--POS", column_mapping['position'],
+                "--REF", column_mapping['reference'],
+                "--ALT", column_mapping['alternate'],
+                "--verbose"
+            ]
+            subprocess.run(command, check=True)
+
+            # Remove the temporary input file
+            os.remove(input_temp)
+
+    # After processing all chromosomes, combine results
+    tsv_files = glob.glob('converted_data_*.tsv')
+    dfs = [pd.read_csv(file, sep='\t') for file in tsv_files]
+    final_df = pd.concat(dfs, ignore_index=True)
+    final_df.to_csv(output_filename, index=False)
+
+    print(f"\n✅ Pipeline completed! Combined file saved as: {output_filename}")
